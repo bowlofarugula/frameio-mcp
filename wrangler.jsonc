@@ -1,0 +1,36 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "frameio-mcp",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-03-10",
+  "compatibility_flags": ["nodejs_compat"],
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["FrameioMCP"] }],
+  "durable_objects": {
+    "bindings": [{ "name": "MCP_OBJECT", "class_name": "FrameioMCP" }]
+  },
+  "kv_namespaces": [
+    // Create your own namespace and put its id here:
+    //   npx wrangler kv namespace create OAUTH_KV
+    { "binding": "OAUTH_KV", "id": "<your-kv-namespace-id>" }
+  ],
+  // Access gate (fail-closed): only /authorize flows whose redirect_uri matches may start
+  // Adobe OAuth, so the public workers.dev URL can't bypass your front door. Comma-separated.
+  //
+  // PORTAL_REDIRECT_URI — EXACT-match allowlist. Set it to whatever redirect_uri your client
+  //   uses. The default is Cloudflare Access's (fixed, non-secret) portal callback, for
+  //   fronting with a Cloudflare MCP portal; to connect a client DIRECTLY (MCP Inspector,
+  //   scripts/e2e.py), set it to that client's redirect_uri.
+  // PORTAL_REDIRECT_URI_PREFIXES — optional startsWith allowlist; empty by default. Only when
+  //   fronting with a Cloudflare MCP portal that uses the dashboard "Sync capabilities"
+  //   callback, set it to your account's dashboard path:
+  //   https://dash.cloudflare.com/<your-account-id>/one/access-controls/ai-controls/mcp-server/oauth-callback/
+  "vars": {
+    "PORTAL_REDIRECT_URI": "https://oauth-callbacks.cloudflareaccess.com/cdn-cgi/access/outbound-oauth-callback",
+    "PORTAL_REDIRECT_URI_PREFIXES": ""
+  },
+  "observability": { "enabled": true },
+  // The frameio package's ESM entry has a broken extensionless re-export
+  // (`from "./oauth"`) that esbuild can't resolve. Its CJS build resolves
+  // directory imports correctly, so bundle against that.
+  "alias": { "frameio": "./node_modules/frameio/dist/cjs/index.js" }
+}
